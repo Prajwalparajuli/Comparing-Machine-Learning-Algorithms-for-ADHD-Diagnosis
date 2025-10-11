@@ -24,8 +24,11 @@ reports/tables/
 # Paper folder is allowed (contains no raw data)
 paper/
 !paper/.gitkeep
+!paper/README.md
+!paper/*.pdf
 paper/figures/
 !paper/figures/.gitkeep
+!paper/figures/*
 
 # OS / editor junk
 .DS_Store
