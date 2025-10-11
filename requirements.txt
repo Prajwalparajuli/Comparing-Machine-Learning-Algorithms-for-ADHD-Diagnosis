@@ -1,0 +1,8 @@
+# Auto-generated from notebook import analysis (do not edit by hand)
+matplotlib
+numpy
+pandas
+scikit-learn
+scipy
+tensorflow
+xgboost

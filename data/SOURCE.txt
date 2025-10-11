@@ -1,0 +1,6 @@
+No data is stored in this repository.
+
+ADHD-200 (Athena pipeline) dataset can be obtained from:
+https://www.nitrc.org/plugins/mwiki/index.php/neurobureau:AthenaPipeline
+
+Place any downloaded files under data/ (not tracked by git).

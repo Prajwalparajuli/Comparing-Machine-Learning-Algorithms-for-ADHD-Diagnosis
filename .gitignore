@@ -1,0 +1,33 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data and derived artifacts (do not commit raw data)
+data/
+!data/.gitkeep
+!data/SOURCE.txt
+data/processed/
+!data/processed/.gitkeep
+
+# Reports (generated outputs)
+reports/
+!reports/.gitkeep
+reports/figures/
+!reports/figures/.gitkeep
+reports/tables/
+!reports/tables/.gitkeep
+
+# Paper folder is allowed (contains no raw data)
+paper/
+!paper/.gitkeep
+paper/figures/
+!paper/figures/.gitkeep
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.vscode/
