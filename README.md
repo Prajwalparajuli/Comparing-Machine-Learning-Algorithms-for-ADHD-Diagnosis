@@ -18,9 +18,6 @@ This repository compares SVM, Random Forest, and XGBoost (optionally CNN) for AD
   - **figures/** — plots (e.g., accuracy/F1 bar charts)
   - **tables/** — CSV summaries (e.g., cross-validation metrics)
 
-> This repo is notebook-first. We are NOT executing notebooks in this setup.
-> The structure enables reproducibility without shipping any data.
-
 ## Quick Start (for future reproduction)
 ```bash
 pip install -r requirements.txt
