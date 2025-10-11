@@ -31,3 +31,6 @@ paper/figures/
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Analysis reports (local only)
+ANALYSIS_REPORT.md

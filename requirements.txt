@@ -1,4 +1,7 @@
 # Auto-generated from notebook import analysis (do not edit by hand)
+ipython
+joblib
+keras-tuner
 matplotlib
 numpy
 pandas
