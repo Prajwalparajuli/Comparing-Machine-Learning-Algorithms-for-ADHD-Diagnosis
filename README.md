@@ -1,6 +1,6 @@
 # Comparing Machine Learning Algorithms for ADHD Diagnosis Using Multimodal rs-fMRI and Clinical Features from the ADHD-200 Dataset
 
-This repository compares SVM, Random Forest, and XGBoost (optionally CNN) for ADHD vs. Control classification using:
+This repository compares SVM, Random Forest,  XGBoost, Multi modal DNN and Early Fusion LSTM for ADHD vs. Control classification using:
 - Functional Connectivity (FC, CC200)
 - Regional synchrony approximation (ROI-level ReHo-inspired)
 - fALFF
