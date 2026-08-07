@@ -1,11 +1,17 @@
-# Auto-generated from notebook import analysis (do not edit by hand)
-ipython
-joblib
-keras-tuner
-matplotlib
-numpy
-pandas
-scikit-learn
-scipy
-tensorflow
-xgboost
+# Core ML
+numpy>=1.26
+pandas>=2.2
+scikit-learn>=1.5
+scipy>=1.14
+xgboost>=2.1
+
+# Neural Network
+tensorflow>=2.16
+
+# Visualization
+matplotlib>=3.9
+seaborn>=0.13
+
+# Utilities
+joblib>=1.4
+tqdm>=4.66

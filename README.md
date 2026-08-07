@@ -7,8 +7,8 @@ This repository compares SVM, Random Forest,  XGBoost, Multi modal DNN and Early
 - Selected phenotypic covariates (e.g., DX, Age, Sex, IQs, MedStatus, Site)
 
 ## Repository Layout
-- **Feature Extraction jupyter notebooks/** — existing feature notebooks (kept as-is)
-- **Machine Learning Models/** — existing modeling notebooks (kept as-is)
+- **Feature Extraction jupyter notebooks/** — existing feature notebooks 
+- **Machine Learning Models/** — existing modeling notebooks 
 - **paper/** — manuscript and publication assets
   - **Comparing Machine Learning Algorithms for ADHD Diagnosis Using Multimodal rs-fMRI and Clinical Features from the ADHD-200 Dataset.pdf** (final manuscript)
   - **figures/** (moved from the original "Graphs and figures/" folder)
