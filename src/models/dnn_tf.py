@@ -18,6 +18,24 @@ from src.models.base import run_experiment, run_across_datasets
 MODEL_NAME = "DNN_TF"
 
 
+def setup_tf_gpu():
+    """Configure TensorFlow environment and GPU settings."""
+    import os
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+    import tensorflow as tf
+    tf.get_logger().setLevel("ERROR")
+    gpus = tf.config.list_physical_devices("GPU")
+    if gpus:
+        try:
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
+            print(f"  [GPU Check] TensorFlow CUDA GPU active: {len(gpus)} GPU(s) ({gpus[0].name})", flush=True)
+        except Exception as e:
+            print(f"  [GPU Check] TensorFlow GPU note: {e}", flush=True)
+    else:
+        print("  [GPU Check] TensorFlow active (CPU / default compute device)", flush=True)
+
+
 class TFDNNClassifier(BaseEstimator, ClassifierMixin):
     """TensorFlow/Keras DNN wrapped as sklearn estimator."""
 
@@ -57,6 +75,7 @@ class TFDNNClassifier(BaseEstimator, ClassifierMixin):
         tf.random.set_seed(self.random_state)
         np.random.seed(self.random_state)
 
+        X = np.asarray(X, dtype=np.float32)
         self.classes_ = np.unique(y)
         self.model_ = self._build_model(X.shape[1])
 
@@ -74,32 +93,39 @@ class TFDNNClassifier(BaseEstimator, ClassifierMixin):
         return self
 
     def predict(self, X):
+        X = np.asarray(X, dtype=np.float32)
         proba = self.model_.predict(X, verbose=0).ravel()
         return (proba >= 0.5).astype(int)
 
     def predict_proba(self, X):
+        X = np.asarray(X, dtype=np.float32)
         proba_pos = self.model_.predict(X, verbose=0).ravel()
         return np.column_stack([1 - proba_pos, proba_pos])
 
 
-def build_model():
+from sklearn.feature_selection import SelectKBest, f_classif
+
+
+def build_model(n_features=None):
     """Build DNN pipeline."""
-    return Pipeline([
-        ("scaler", StandardScaler()),
-        ("clf", TFDNNClassifier(
-            hidden_units=[256, 128, 64], dropout_rate=0.3,
-            epochs=150, batch_size=32, learning_rate=0.001,
-            random_state=RANDOM_STATE,
-        )),
-    ])
+    steps = [("scaler", StandardScaler())]
+    if n_features and n_features > 2000:
+        steps.append(("select", SelectKBest(f_classif, k=1000)))
+    steps.append(("clf", TFDNNClassifier(
+        hidden_units=[256, 128, 64], dropout_rate=0.3,
+        epochs=150, batch_size=32, learning_rate=0.001,
+        random_state=RANDOM_STATE,
+    )))
+    return Pipeline(steps)
 
 
 def main():
+    setup_tf_gpu()
     args = sys.argv[1:]
     if args:
         for ds in args:
             X, y, _ = load_dataset(ds)
-            model = build_model()
+            model = build_model(X.shape[1])
             run_experiment(MODEL_NAME, model, X, y, dataset_name=ds, is_search=False)
     else:
         run_across_datasets(MODEL_NAME, build_model, is_search=False)
@@ -107,3 +133,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

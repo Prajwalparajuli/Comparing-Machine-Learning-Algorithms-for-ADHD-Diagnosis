@@ -20,12 +20,12 @@ from src.config import RAW_DIR, DATA_DIR
 
 # ─── Dataset Registry ──────────────────────────────────────────
 DATASET_NAMES = [
-    "FC",
-    "FC_Pheno",
     "FC_PCA",
     "ROI_Sync",
     "fALFF",
     "Combined",
+    "FC",
+    "FC_Pheno",
 ]
 
 DATASET_DESCRIPTIONS = {
@@ -54,7 +54,7 @@ def _load_csv(path, name):
 def _extract_Xy(df):
     """Split a DataFrame into feature matrix X and label vector y."""
     feature_cols = [c for c in df.columns if c != "DX"]
-    X = df[feature_cols].values.astype(np.float64)
+    X = df[feature_cols].values.astype(np.float32)
     y = df["DX"].values.astype(np.int32)
     X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
     return X, y
@@ -89,7 +89,7 @@ def load_dataset(name):
         dropped = [c for c in leak_cols if c in df.columns]
         if dropped:
             df = df.drop(columns=dropped)
-            print(f"    ⚠ Dropped leaky columns: {dropped}")
+            print(f"    [WARNING] Dropped leaky columns: {dropped}", flush=True)
         X, y = _extract_Xy(df)
 
     elif name == "FC_PCA":
@@ -126,7 +126,7 @@ def load_dataset(name):
             pca_df[pca_cols].values,
             reho_df[reho_cols].values,
             falff_df[falff_cols].values,
-        ]).astype(np.float64)
+        ]).astype(np.float32)
         X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
 
     desc = DATASET_DESCRIPTIONS[name]

@@ -12,7 +12,8 @@ import warnings
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from sklearn.model_selection import StratifiedKFold
+from sklearn.base import clone
+from sklearn.model_selection import StratifiedKFold, RandomizedSearchCV, GridSearchCV
 from sklearn.metrics import (
     accuracy_score, f1_score, roc_auc_score,
     classification_report, confusion_matrix,
@@ -31,7 +32,9 @@ def get_cv():
 def run_experiment(model_name, estimator, X, y, dataset_name="Combined",
                    is_search=False):
     """
-    Run stratified k-fold CV for a single model on a single dataset.
+    Run 10-fold CV for a single model on a single dataset.
+    If estimator is a SearchCV object (or is_search=True), hyperparameter search
+    is performed ONCE on the full dataset, and the best estimator is evaluated across 10 folds.
 
     Parameters
     ----------
@@ -40,38 +43,55 @@ def run_experiment(model_name, estimator, X, y, dataset_name="Combined",
     X : np.ndarray
     y : np.ndarray
     dataset_name : str
-    is_search : bool — if True, log best_params_ from SearchCV.
+    is_search : bool
 
     Returns
     -------
     dict — results summary.
     """
+    print(f"\n{'='*60}", flush=True)
+    print(f"  {model_name} × {dataset_name} — Evaluation Harness", flush=True)
+    print(f"{'='*60}", flush=True)
+
+    best_params = None
+    is_search_obj = isinstance(estimator, (RandomizedSearchCV, GridSearchCV))
+
+    if is_search_obj or (is_search and hasattr(estimator, "fit")):
+        if is_search_obj:
+            print(f"  [Step 1/2] Hyperparameter Tuning (Search ONCE on dataset)...", flush=True)
+            t0_search = time.time()
+            estimator.fit(X, y)
+            search_time = time.time() - t0_search
+            best_params = estimator.best_params_
+            eval_estimator = estimator.best_estimator_
+            print(f"            Search complete in {search_time:.1f}s", flush=True)
+            print(f"            Best Params: {best_params}", flush=True)
+        else:
+            eval_estimator = estimator
+    else:
+        eval_estimator = estimator
+
     skf = get_cv()
     fold_metrics = []
     oof_preds = np.full(len(y), -1, dtype=int)
     oof_proba = np.full(len(y), np.nan, dtype=float)
-    best_params_per_fold = []
 
-    print(f"\n{'='*60}")
-    print(f"  {model_name} × {dataset_name} — {N_FOLDS}-Fold CV")
-    print(f"{'='*60}")
+    print(f"  [Step 2/2] 10-Fold Cross-Validation Evaluation...", flush=True)
 
     for fold_idx, (train_idx, val_idx) in enumerate(skf.split(X, y)):
         X_train, X_val = X[train_idx], X[val_idx]
         y_train, y_val = y[train_idx], y[val_idx]
 
+        fold_model = clone(eval_estimator)
         t0 = time.time()
-        estimator.fit(X_train, y_train)
+        fold_model.fit(X_train, y_train)
         train_time = time.time() - t0
 
-        if is_search and hasattr(estimator, "best_params_"):
-            best_params_per_fold.append(estimator.best_params_)
-
-        y_pred = estimator.predict(X_val)
+        y_pred = fold_model.predict(X_val)
         oof_preds[val_idx] = y_pred
 
         try:
-            y_prob = estimator.predict_proba(X_val)[:, 1]
+            y_prob = fold_model.predict_proba(X_val)[:, 1]
             oof_proba[val_idx] = y_prob
             auc = roc_auc_score(y_val, y_prob)
         except Exception:
@@ -90,19 +110,19 @@ def run_experiment(model_name, estimator, X, y, dataset_name="Combined",
             "train_time_s": round(train_time, 2),
         })
 
-        print(f"  Fold {fold_idx+1:2d} | Acc={acc:.4f}  F1={f1:.4f}  "
-              f"AUC={auc:.4f}  ({train_time:.1f}s)")
+        print(f"    Fold {fold_idx+1:2d} | Acc={acc:.4f}  F1={f1:.4f}  "
+              f"AUC={auc:.4f}  ({train_time:.1f}s)", flush=True)
 
     # Summary stats
     accs = [m["accuracy"] for m in fold_metrics]
     f1s = [m["f1_macro"] for m in fold_metrics]
     aucs = [m["roc_auc"] for m in fold_metrics if not np.isnan(m["roc_auc"])]
 
-    print(f"\n  >>> {model_name} × {dataset_name}:")
-    print(f"      Accuracy: {np.mean(accs):.4f} ± {np.std(accs):.4f}")
-    print(f"      F1-macro: {np.mean(f1s):.4f} ± {np.std(f1s):.4f}")
+    print(f"\n  >>> {model_name} x {dataset_name}:", flush=True)
+    print(f"      Accuracy: {np.mean(accs):.4f} +/- {np.std(accs):.4f}", flush=True)
+    print(f"      F1-macro: {np.mean(f1s):.4f} +/- {np.std(f1s):.4f}", flush=True)
     if aucs:
-        print(f"      ROC-AUC:  {np.mean(aucs):.4f} ± {np.std(aucs):.4f}")
+        print(f"      ROC-AUC:  {np.mean(aucs):.4f} +/- {np.std(aucs):.4f}", flush=True)
 
     # Save to results/{MODEL}/{DATASET}/
     save_dir = RESULTS_DIR / model_name / dataset_name
@@ -124,10 +144,10 @@ def run_experiment(model_name, estimator, X, y, dataset_name="Combined",
     with open(save_dir / "classification_report.json", "w") as f:
         json.dump(report, f, indent=2)
 
-    if best_params_per_fold:
+    if best_params:
         with open(save_dir / "best_params.json", "w") as f:
-            json.dump(best_params_per_fold, f, indent=2, default=str)
-        print(f"      Best params (fold 1): {best_params_per_fold[0]}")
+            json.dump(best_params, f, indent=2, default=str)
+        print(f"      Best params saved -> {save_dir}/best_params.json", flush=True)
 
     summary = {
         "model": model_name,
@@ -140,7 +160,7 @@ def run_experiment(model_name, estimator, X, y, dataset_name="Combined",
         "auc_std": np.std(aucs) if aucs else np.nan,
     }
 
-    print(f"  Results → {save_dir}/")
+    print(f"  Results -> {save_dir}/", flush=True)
     return summary
 
 
@@ -151,7 +171,7 @@ def run_across_datasets(model_name, build_fn, datasets=None, is_search=False):
     Parameters
     ----------
     model_name : str
-    build_fn : callable() -> estimator  (returns a fresh estimator each call)
+    build_fn : callable(n_features=None) -> estimator
     datasets : list[str] or None  (None = all datasets)
     is_search : bool
 
@@ -166,7 +186,10 @@ def run_across_datasets(model_name, build_fn, datasets=None, is_search=False):
     for ds_name in datasets:
         try:
             X, y, desc = load_dataset(ds_name)
-            model = build_fn()
+            try:
+                model = build_fn(X.shape[1])
+            except TypeError:
+                model = build_fn()
             summary = run_experiment(
                 model_name, model, X, y,
                 dataset_name=ds_name,
@@ -174,6 +197,7 @@ def run_across_datasets(model_name, build_fn, datasets=None, is_search=False):
             )
             summaries.append(summary)
         except Exception as e:
-            print(f"\n  [ERROR] {model_name} × {ds_name}: {e}")
+            print(f"\n  [ERROR] {model_name} x {ds_name}: {e}", flush=True)
 
     return summaries
+

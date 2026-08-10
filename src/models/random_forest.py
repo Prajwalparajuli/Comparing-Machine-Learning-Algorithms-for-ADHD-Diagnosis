@@ -32,13 +32,13 @@ def build_model():
     pipe = Pipeline([
         ("scaler", StandardScaler()),
         ("clf", RandomForestClassifier(
-            class_weight="balanced", random_state=RANDOM_STATE, n_jobs=-1,
+            class_weight="balanced", random_state=RANDOM_STATE, n_jobs=1,
         )),
     ])
     return RandomizedSearchCV(
-        pipe, param_distributions=PARAM_DIST, n_iter=25,
-        cv=get_cv(), scoring="f1_weighted", refit=True,
-        random_state=RANDOM_STATE, n_jobs=-1, verbose=0,
+        pipe, param_distributions=PARAM_DIST, n_iter=15,
+        cv=5, scoring="f1_weighted", refit=True,
+        random_state=RANDOM_STATE, n_jobs=-1, verbose=1,
     )
 
 

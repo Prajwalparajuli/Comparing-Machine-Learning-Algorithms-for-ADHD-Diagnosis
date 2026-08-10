@@ -87,9 +87,9 @@ def main():
 
     for ds_name in all_results:
         models = all_results[ds_name]
-        print(f"\n{'─'*60}")
+        print(f"\n{'-'*60}")
         print(f"  Dataset: {ds_name} ({len(models)} models)")
-        print(f"{'─'*60}")
+        print(f"{'-'*60}")
 
         rng = np.random.RandomState(RANDOM_STATE)
         ci_results = []

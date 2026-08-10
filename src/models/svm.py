@@ -35,8 +35,8 @@ def build_model():
         ("clf", SVC(probability=True, random_state=RANDOM_STATE)),
     ])
     return GridSearchCV(
-        pipe, param_grid=PARAM_GRID, cv=get_cv(),
-        scoring="f1_weighted", refit=True, n_jobs=-1, verbose=0,
+        pipe, param_grid=PARAM_GRID, cv=5,
+        scoring="f1_weighted", refit=True, n_jobs=-1, verbose=1,
     )
 
 
